@@ -1,0 +1,4 @@
+name: Tickets
+main: zedly.tickets.Tickets
+version: 0.1.0
+author: Zedly
