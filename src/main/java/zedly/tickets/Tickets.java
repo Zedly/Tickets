@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -46,14 +48,13 @@ public class Tickets extends JavaPlugin {
 
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
             for (Board board : BOARDS.values()) {
-                System.out.println("Dynamically registering command: " + board.getName());
                 try {
                     registerCommand(board, this);
                 } catch (ReflectiveOperationException ex) {
                     ex.printStackTrace();
                 }
             }
-        }, 1);
+        }, 1);  
     }
 
     @Override

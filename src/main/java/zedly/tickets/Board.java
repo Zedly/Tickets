@@ -7,8 +7,10 @@ package zedly.tickets;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -17,6 +19,7 @@ import java.util.Map.Entry;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -195,23 +198,25 @@ public class Board extends DynamicallyLoadedCommand {
             page = activePages;
         }
         sender.sendMessage(StringUtil.generateHLineTitle("Open " + boardname.toUpperCase() + " Tickets"));
+        sender.sendMessage("");
         for (int i = JOBS_PER_PAGE * (page - 1); i < JOBS_PER_PAGE * page && i < activeTickets.size(); i++) {
             Ticket ticket = activeTickets.get(i);
             sender.sendMessage(ChatColor.DARK_GRAY + " ["
                     + ChatColor.BLUE + (i + 1)
                     + ChatColor.DARK_GRAY + "] "
                     + ChatColor.DARK_AQUA + ticket.getAuthorName()
-                    + ChatColor.DARK_GRAY + ": " + ChatColor.GRAY + ticket.getMessage());
-            if (ticket.getNumberOfEdits() > 0) {
-                sender.sendMessage("  " + ChatColor.GRAY + ChatColor.ITALIC
-                        + "[Comments: " + ticket.getNumberOfEdits() + "]");
-            }
+                    + ChatColor.AQUA + " on " + Tickets.DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(ticket.getCreationTime())))
+                    + ((ticket.getNumberOfEdits() > 0)
+                    ? ("  " + ChatColor.AQUA + ChatColor.ITALIC
+                    + "[Comments: " + ticket.getNumberOfEdits() + "]") : ""));
+            sender.sendMessage("     " + ChatColor.GRAY + ticket.getMessage());
         }
+        sender.sendMessage("");
         sender.sendMessage(StringUtil.generateHLineTitle("Page " + page + " of " + getNumberOfActivePages()));
     }
 
     private void displayTicketDetail(CommandSender sender, Ticket job) {
-        sender.sendMessage(StringUtil.generateHLineTitle(boardname.toUpperCase() + "-@" + job.getUniqueId()));
+        sender.sendMessage(StringUtil.generateHLineTitle(boardname.toUpperCase() + "-@" + job.getUniqueId() + " - Details"));
         job.sendDetail(sender);
         sender.sendMessage(StringUtil.generateHLineTitle(""));
     }
@@ -237,8 +242,7 @@ public class Board extends DynamicallyLoadedCommand {
     }
 
     public void displayMessage(CommandSender sender, String message) {
-        sender.sendMessage("" + ChatColor.BLUE + ChatColor.BOLD + boardname.toUpperCase()
-                + ChatColor.DARK_GRAY + ": "
+        sender.sendMessage("" + ChatColor.BLUE + ChatColor.BOLD + boardname.toUpperCase() + ": "
                 + ChatColor.GRAY + message);
     }
 
@@ -257,8 +261,9 @@ public class Board extends DynamicallyLoadedCommand {
     }
 
     public boolean hasPermission(CommandSender sender, String action) {
-        return sender.hasPermission("tickets." + boardname + ".*")
-                || sender.hasPermission("tickets." + boardname + "." + action);
+        return sender.hasPermission("tickets." + boardname + "." + action)
+                || sender.hasPermission("tickets." + boardname + ".*")
+                || sender.hasPermission("tickets.*");
     }
 
     public Ticket getJob(String jobTag) {
@@ -277,6 +282,13 @@ public class Board extends DynamicallyLoadedCommand {
         Ticket job = new Ticket(player, message, nextUniqueId++);
         activeTickets.add(job);
         allTickets.put("@" + job.getUniqueId(), job);
+        String notification = "" + ChatColor.BLUE + ChatColor.BOLD + boardname.toUpperCase() + ": "
+                + ChatColor.GRAY + player.getName() + " has created " + boardname.toUpperCase() + "-@" + job.getUniqueId();
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (hasPermission(p, "notify")) {
+                p.sendMessage(notification);
+            }
+        }
     }
 
     public int getNumberOfActiveTickets() {

@@ -9,8 +9,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -109,6 +107,10 @@ public class Ticket implements Comparable<Ticket> {
 
     public long getCloseTime() {
         return closeTime;
+    }
+
+    public long getCreationTime() {
+        return creationTime;
     }
 
     public String getMessage() {

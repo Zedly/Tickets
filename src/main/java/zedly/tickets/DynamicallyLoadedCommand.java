@@ -9,7 +9,6 @@ import java.util.List;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.defaults.BukkitCommand;
-import org.bukkit.entity.Player;
 
 /**
  *
@@ -25,6 +24,10 @@ public abstract class DynamicallyLoadedCommand extends BukkitCommand {
 
     @Override
     public boolean execute(CommandSender sender, String commandLabel, String[] args) {
+        if(!sender.hasPermission(getPermission()) && !sender.hasPermission("tickets.*")) {
+            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+            return true;
+        }
         return onCommand(sender, commandLabel, args);
     }
     
