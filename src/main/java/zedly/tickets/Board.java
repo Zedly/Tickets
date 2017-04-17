@@ -81,6 +81,18 @@ public class Board extends DynamicallyLoadedCommand {
                         listTickets(sender, 1);
                     }
                     break;
+                case "history":
+                    if (!ensurePermission(sender, "list")) {
+                        break;
+                    }
+                    if (args.length == 1) {
+                        listHistory(sender, 1);
+                    } else if (args[1].matches("\\d{1,8}")) {
+                        listHistory(sender, Integer.parseInt(args[1]));
+                    } else {
+                        listHistory(sender, 1);
+                    }
+                    break;
                 case "warp":
                 case "tp":
                     if (!(sender instanceof Player)) {
@@ -215,6 +227,55 @@ public class Board extends DynamicallyLoadedCommand {
         sender.sendMessage(StringUtil.generateHLineTitle("Page " + page + " of " + getNumberOfActivePages()));
     }
 
+    private void listHistory(CommandSender sender, int page) {
+        ArrayList<Ticket> closedTickets = new ArrayList<>();
+        allTickets.values().forEach(
+                (t) -> {
+                    if (!t.isOpen()) {
+                        closedTickets.add(t);
+                    }
+                });
+
+        Collections.sort(closedTickets, (a, b) -> {
+            if (b.getCreationTime() > a.getCreationTime()) {
+                return 1;
+            } else if (b.getCreationTime() < a.getCreationTime()) {
+                return -1;
+            }
+            return 0;
+        });
+
+        int closedPages = getNumberOfClosedPages();
+        if (closedPages == 0) {
+            displayMessage(sender, "There are no closed tickets on this board!");
+            return;
+        }
+        if (page <= 0) {
+            page = 1;
+        }
+        if (page > closedPages) {
+            page = closedPages;
+        }
+        sender.sendMessage(StringUtil.generateHLineTitle("Recently closed " + boardname.toUpperCase() + " Tickets"));
+        sender.sendMessage("");
+        for (int i = JOBS_PER_PAGE * (page - 1); i < JOBS_PER_PAGE * page && i < closedTickets.size(); i++) {
+            Ticket ticket = closedTickets.get(i);
+            sender.sendMessage(ChatColor.DARK_GRAY + " ["
+                    + ChatColor.BLUE + "@" + ticket.getUniqueId()
+                    + ChatColor.DARK_GRAY + "] "
+                    + ChatColor.DARK_AQUA + ticket.getAuthorName()
+                    + ChatColor.AQUA + ", closed by "
+                    + ChatColor.DARK_AQUA + ticket.getClosedByName()
+                    + ChatColor.AQUA + " on " + Tickets.DATE_FORMAT.format(Date.from(Instant.ofEpochMilli(ticket.getCloseTime())))
+                    + ((ticket.getNumberOfEdits() > 0)
+                    ? ("  " + ChatColor.AQUA + ChatColor.ITALIC
+                    + "[Comments: " + ticket.getNumberOfEdits() + "]") : ""));
+            sender.sendMessage("     " + ChatColor.GRAY + ticket.getMessage());
+        }
+        sender.sendMessage("");
+        sender.sendMessage(StringUtil.generateHLineTitle("Page " + page + " of " + getNumberOfClosedPages()));
+    }
+
     private void displayTicketDetail(CommandSender sender, Ticket job) {
         sender.sendMessage(StringUtil.generateHLineTitle(boardname.toUpperCase() + "-@" + job.getUniqueId() + " - Details"));
         job.sendDetail(sender);
@@ -298,6 +359,15 @@ public class Board extends DynamicallyLoadedCommand {
     public int getNumberOfActivePages() {
         return activeTickets.size() / JOBS_PER_PAGE
                 + ((activeTickets.size() % JOBS_PER_PAGE == 0) ? 0 : 1);
+    }
+
+    public int getNumberOfClosedTickets() {
+        return allTickets.size() - activeTickets.size();
+    }
+
+    public int getNumberOfClosedPages() {
+        return getNumberOfClosedTickets() / JOBS_PER_PAGE
+                + ((getNumberOfClosedTickets() % JOBS_PER_PAGE == 0) ? 0 : 1);
     }
 
     public String getName() {

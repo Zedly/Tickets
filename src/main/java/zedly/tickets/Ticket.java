@@ -104,6 +104,10 @@ public class Ticket implements Comparable<Ticket> {
     public String getAuthorName() {
         return authorName;
     }
+    
+    public String getClosedByName() {
+        return closedBy;
+    }
 
     public long getCloseTime() {
         return closeTime;
